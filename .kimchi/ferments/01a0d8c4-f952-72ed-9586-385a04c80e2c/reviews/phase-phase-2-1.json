@@ -1,0 +1,63 @@
+{
+  "schemaVersion": 1,
+  "fermentId": "01a0d8c4-f952-72ed-9586-385a04c80e2c",
+  "phaseId": "phase-2",
+  "phaseName": "Phase 2 — Backend: orchestrator, agents, persistence, API",
+  "attempt": 1,
+  "timestamp": "2026-09-25T14:44:11.735Z",
+  "goal": "A bootable backend that accepts goals via REST, decomposes and assigns them to simulated agents, drives the full task lifecycle autonomously, persists lessons to SQLite, and broadcasts everything over WebSocket",
+  "summary": "Phase 2 delivered a fully operational simulated-agent backend: server/src/db.ts (node:sqlite factory: idempotent schema + FK pragma, typed CRUD goals/agents/tasks/lessons, injectable IDs, prepared statements, JSON activity, deterministic newest-first lessons), server/src/orchestrator.ts (pure: decomposeGoal -> pending goal + deterministic 4-task researcher/coder/reviewer template with blank-throw and 60-char topic truncation; least-loaded role-matched assignTasks + retryUnassigned; aggregateGoalStatus with failed precedence), server/src/agents.ts (createSimulation: mulberry32 seeded RNG, synchronous tick with retry-then-progress semantics, 2-4 tick budgets, todo->in_progress->done/failed with role-flavored thought-chain activity, Lesson from/Pitfall from lesson banking, fresh-object WsEvent emission in task/agent/lesson/goal order, idempotent terminal ticks, unref'd start()), server/src/ws.ts + api.ts + index.ts (WS hub at /ws with dead-client cleanup; REST: POST /goals 400/201, GET /goals/:id 404, GET /agents, GET /lessons ?limit 1..200, GET /state StateSnapshot; production boot with file db, 3-agent seed, env config, signal teardown; fixed ws null-callback client-drop and undici keep-alive teardown hang). Test coverage: 67 server tests (db 30, orchestrator 14, lifecycle 7, api 12 incl. WS client assertions, lessons/restart 2) + 1 web sanity = 68/68 root, typecheck + lint exit 0, plus a recorded boot smoke of a real process running a full autonomous goal to done with 4 lessons banked.",
+  "stepSummaries": "  1. Implement server/src/db.ts: node:sqlite schema (goals, agents, tasks, lessons) + typed CRUD functions, plus server/src/db.test.ts covering roundtrip writes and reads [verified]\n  2. Implement server/src/orchestrator.ts: goal decomposition (goal text -> >=3 role-matched sub-task templates across Researcher/Coder/Reviewer), role-based assignment to registered agents, goal status aggregation; with orchestrator.test.ts asserting count, role matching, and assignment [verified]\n  3. Implement server/src/agents.ts + tick loop: simulated agents autonomously transition assigned tasks todo -> in_progress -> done/failed with seeded outcomes and realistic activity messages (the PRD's thought-chain stand-in), generating a Lesson on every completion and every failure (failures shared as pitfalls to avoid); lifecycle.test.ts runs a full sample goal to completion deterministically [verified]\n  4. Implement server/src/api.ts + ws.ts + index.ts: REST endpoints POST /goals (400 on empty text), GET /state, GET /goals/:id, GET /agents, GET /lessons (404 for unknown goal), WS hub broadcasting every state mutation, boot wiring of orchestrator loop; api.test.ts starts the server on an ephemeral port, exercises all endpoints, and asserts a WS client receives task.updated events after POST /goals [verified]\n  5. Restart persistence: lessons.test.ts boots the store, completes a task so a lesson is written, closes and reopens the SQLite file/server, and asserts GET /lessons still returns the entry [verified]",
+  "diffAvailable": false,
+  "evidence": "$ npm --prefix server test -> exit 0: 'Test Files 6 passed (6), Tests 67 passed (67)' (db 30, orchestrator 14, lifecycle 7, api 12, sanity 2, lessons 2)\n$ npm test (root) -> exit 0: 'Test Files 7 passed (7), Tests 68 passed (68)'\n$ npm --prefix server run typecheck -> exit 0; $ npm run lint -> exit 0\n$ Boot smoke PORT=3211 TOGEZER_DB=/tmp/togezer-smoke/boot.db: GET /state -> 3 seeded agents idle; POST /goals {\"text\":\"launch the marketing site\"} -> 201 (goal running, 4 role-matched assigned tasks); ~2s: 3 in_progress; ~8s: goal done, 4x done, 4 lessons ('Lesson from \"Implement the core deliverable...\"'); log: 'togezer server listening on http://localhost:3211'; SIGTERM clean; tmp db removed.\n$ Restart persistence: 4 lessons byte-identical (id/content/sourceTaskId/createdAt) after shutdown+reboot on same file; second goal post-restart accumulates 8 lessons.",
+  "flags": [],
+  "derivedGrade": "A",
+  "reviewerRationale": "All gates pass; project checks validate.",
+  "gateVerdicts": [
+    {
+      "id": "F1",
+      "verdict": "pass",
+      "rationale": "Every step was verified by executing the real artifact: 5 dedicated Vitest suites run the actual db/orchestrator/simulation/HTTP+WS stacks (67 server tests), step-4 additionally ran an out-of-process boot smoke with observed end-to-end state transitions, and step-5 proved persistence across real process-level restarts on file-backed SQLite — zero proxy or sentinel verification anywhere in the phase",
+      "evidence": "npm --prefix server test -> 67/67; root npm test -> 68/68; boot smoke PORT=3211: goal running->done, tasks 4x done, lessons 4, exact log line, clean SIGTERM; restart test: 4 lessons byte-identical after close+reopen"
+    },
+    {
+      "id": "F2",
+      "verdict": "pass",
+      "rationale": "Phase goal — a bootable backend accepting goals via REST, decomposing+assigning to simulated agents, autonomously driving the lifecycle, persisting lessons to SQLite, broadcasting over WebSocket — is demonstrated by the accumulated artifacts: api.test.ts asserts REST+WS behavior on live servers, lifecycle.test.ts asserts autonomous execution, lessons.test.ts asserts restart persistence, and the boot smoke recorded all of it in one real run",
+      "evidence": "api.test.ts 12/12 (role-matched assignment, 400/404, WS task.updated); lifecycle.test.ts 7/7 (deterministic completion, event legality, determinism, idempotency); lessons.test.ts 2/2; GET /state snapshot shape"
+    },
+    {
+      "id": "F3",
+      "verdict": "pass",
+      "rationale": "Nothing deferred inside the phase: all 5 planned steps completed with no remaining_steps; one open fact is noted — the repo still has no initial git commit (files untracked), which is outside this ferment's requested scope and does not block any criterion; environment has-no-other-known-issues",
+      "evidence": "5/5 step reports status completed, remaining_steps [] each; worker note 'repo currently has no initial commit'"
+    }
+  ],
+  "projectChecks": {
+    "discovered": true,
+    "anyFailed": false,
+    "commands": [
+      {
+        "kind": "test",
+        "command": "npm test",
+        "exitCode": 0,
+        "durationMs": 0,
+        "timedOut": false
+      },
+      {
+        "kind": "lint",
+        "command": "npm run lint",
+        "exitCode": 0,
+        "durationMs": 0,
+        "timedOut": false
+      },
+      {
+        "kind": "typecheck",
+        "command": "npm run typecheck",
+        "exitCode": 0,
+        "durationMs": 0,
+        "timedOut": false
+      }
+    ]
+  }
+}

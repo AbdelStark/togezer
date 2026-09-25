@@ -1,0 +1,63 @@
+{
+  "schemaVersion": 1,
+  "fermentId": "01a0d8c4-f952-72ed-9586-385a04c80e2c",
+  "phaseId": "phase-1",
+  "phaseName": "Phase 1 — Monorepo scaffold & contracts",
+  "attempt": 2,
+  "timestamp": "2026-09-25T14:02:04.926Z",
+  "goal": "Green npm-workspaces TypeScript monorepo with server/ and web/ packages, shared domain/event types, and all tooling scripts wired",
+  "summary": "Phase 1 delivered a green npm-workspaces TypeScript monorepo for Togezer: root package.json (workspaces server+web, engines node>=22, type module, scripts dev/build/test/typecheck/lint — test = root `vitest run` over server+web projects, typecheck = direct `tsc --noEmit -p server && tsc --noEmit -p web`), .gitignore, strict tsconfig.base.json, root vitest.config.ts (projects: server, web); server/ (express 5.2.1, ws 8.21.3, tsx, vitest 5, NodeNext tsconfig) with canonical server/src/types.ts (Agent/Task/Goal/Lesson + WsEvent union + StateSnapshot + WS_EVENT_TYPES with compile-time exhaustiveness guard); web/ (react 19, vite 8, vitest 5 + jsdom/testing-library) with thin type-only re-export of the contract; tooling wired (vitest configs in both packages, eslint flat config with documented TS7 side-by-side alias pattern, Vite proxy /goals|/state|/agents|/lessons|/ws -> :3001, placeholder /health server, sanity tests). Verified after remediation: npm test exit 0 (2 files, 3 tests, projects togezer-server/togezer-web), npm run typecheck exit 0, npm run lint exit 0, npm install exit 0, boot smoke GET /health -> {\"ok\":true} on :3001, vite/8.3.1 runs.",
+  "stepSummaries": "  1. Create root package.json (workspaces: server, web; scripts: dev, build, test, typecheck, lint), .gitignore (node_modules, dist, *.db), tsconfig.base.json (strict), and package.json + tsconfig for server/ (Express, ws, tsx, vitest) and web/ (Vite, React, vitest) with dependencies pinned [verified]\n  2. Define shared domain contracts in server/src/types.ts: Agent {id,name,role,status}, Task {id,goalId,title,role,status,assigneeId,result?}, Goal {id,text,status}, Lesson {id,content,sourceTaskId,createdAt}, and the WsEvent discriminated union (task.updated, agent.status, lesson.created, goal.status); export a types-only surface the web package also consumes [verified]\n  3. Wire tooling end-to-end: vitest configs in both packages, minimal eslint flat config, dev scripts (tsx watch for server, vite for web), and placeholder src/index.ts entry points so every script runs [verified]",
+  "diffAvailable": false,
+  "evidence": "$ npm test -> exit 0: projects togezer-server src/types.sanity.test.ts (2 tests), togezer-web src/types.sanity.test.ts (1 test); \"Test Files 2 passed (2), Tests 3 passed (3)\" — root vitest.config.ts with projects: ['server','web']\n$ npm run typecheck -> exit 0: \"tsc --noEmit -p server && tsc --noEmit -p web\"\n$ npm run lint -> exit 0: \"eslint .\" zero problems\n$ npm install -> exit 0, 0 vulnerabilities (150 + 99 packages across two installs)\n$ npm ls express ws react --workspaces -> togezer-server: express@5.2.1 ws@8.21.3; togezer-web: react@19.3.0 react-dom@19.3.0\n$ boot smoke: node server/dist/index.js (\":\"3001\") + GET /health -> {\"ok\":true}; dist removed after\n$ npx vite --version -> vite/8.3.1 darwin-arm64 node-v24.18.0\nEnvironment: node v24.18.0, npm 11.16.0",
+  "flags": [],
+  "derivedGrade": "A",
+  "reviewerRationale": "All gates pass; project checks validate.",
+  "gateVerdicts": [
+    {
+      "id": "F1",
+      "verdict": "pass",
+      "rationale": "Mixed verification trail with behavioral coverage of the load-bearing claims: workspace install graph resolution, test execution and a real server boot were exercised end-to-end; syntactic checks (typecheck/lint) are the correct class for types-only and config-only deliverables; remediation re-verified all three root commands against real process exit codes",
+      "evidence": "npm install exit 0 + npm ls workspace graph; npm test exit 0 (3/3 tests, both projects, re-run after root vitest.config.ts added); boot smoke GET /health -> {\"ok\":true}; tsc/eslint exit 0"
+    },
+    {
+      "id": "F2",
+      "verdict": "pass",
+      "rationale": "Phase goal — green npm-workspaces TS monorepo with server/ and web/ packages, shared contracts, all tooling wired — is demonstrably met: install/typecheck/lint/test all exit 0 from root with runnable runner references, canonical contract consumed by both packages, dev/build tooling wire-verified",
+      "evidence": "package.json scripts: test=vitest run, typecheck=tsc --noEmit -p server && -p web, lint=eslint .; server/src/types.ts + web/src/types.ts; vite/vitest/eslint configs; /health smoke"
+    },
+    {
+      "id": "F3",
+      "verdict": "pass",
+      "rationale": "Nothing deferred: all 3 planned steps completed; the discovered types.ts:89 lint blocker was fixed in-phase and re-verified; host validator finding (opaque workspace-delegating scripts) was remediated by direct runner references in root scripts plus a root vitest projects config; environment insights captured (D001 TS7 alias pattern, M001 esbuild warning)",
+      "evidence": "3/3 step reports completed; package.json remediation diff; npm test typecheck lint exit 0 after remediation; D001/M001 recorded"
+    }
+  ],
+  "projectChecks": {
+    "discovered": true,
+    "anyFailed": false,
+    "commands": [
+      {
+        "kind": "test",
+        "command": "npm test",
+        "exitCode": 0,
+        "durationMs": 0,
+        "timedOut": false
+      },
+      {
+        "kind": "lint",
+        "command": "npm run lint",
+        "exitCode": 0,
+        "durationMs": 0,
+        "timedOut": false
+      },
+      {
+        "kind": "typecheck",
+        "command": "npm run typecheck",
+        "exitCode": 0,
+        "durationMs": 0,
+        "timedOut": false
+      }
+    ]
+  }
+}

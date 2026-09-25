@@ -1,0 +1,541 @@
+/*
+ * Togezer — dark "operator console" styling.
+ *
+ * Selectors are keyed to the exact class names emitted by App.tsx and the
+ * components under src/components. Single CSS entry point, imported from
+ * src/main.tsx (tests render components directly and never import CSS).
+ *
+ * Palette:
+ *   background #0b0f14 / panels #12181f / hairlines #232b36
+ *   text #dbe4ee / dim #6b7a90
+ *   accent cyan #35c2c8 · success #3fb950 · danger #f85149
+ *   warn amber #d29922 · violet #a371f7
+ */
+
+:root {
+  --bg: #0b0f14;
+  --bg-panel: #12181f;
+  --bg-raised: #161e27;
+  --border: #232b36;
+  --border-strong: #2f3a47;
+  --text: #dbe4ee;
+  --text-dim: #6b7a90;
+  --accent: #35c2c8;
+  --accent-soft: rgba(53, 194, 200, 0.35);
+  --accent-tint: rgba(53, 194, 200, 0.12);
+  --success: #3fb950;
+  --success-tint: rgba(63, 185, 80, 0.12);
+  --danger: #f85149;
+  --danger-soft: rgba(248, 81, 73, 0.4);
+  --danger-tint: rgba(248, 81, 73, 0.12);
+  --danger-text: #f8aca6;
+  --warn: #d29922;
+  --violet: #a371f7;
+  --ink-on-accent: #062224;
+
+  --font-sans: system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial,
+    sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas,
+    'Liberation Mono', monospace;
+
+  --radius-panel: 8px;
+  --radius-chip: 6px;
+  --radius-pill: 999px;
+}
+
+html {
+  color-scheme: dark;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-sans);
+  font-size: 14px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ------------------------------------------------------------------ */
+/* Header: slim bar, title left, connection indicator right.          */
+/* ------------------------------------------------------------------ */
+
+.app-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 10px 24px;
+  background: var(--bg-panel);
+  border-bottom: 1px solid var(--border);
+}
+
+.app-title {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 650;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+.conn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+
+.conn::before {
+  content: '';
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: currentColor;
+  flex: none;
+}
+
+.conn-connected {
+  color: var(--success);
+}
+
+.conn-reconnecting {
+  color: var(--warn);
+}
+
+.conn-reconnecting::before {
+  animation: conn-pulse 1.2s ease-in-out infinite;
+}
+
+@keyframes conn-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.25;
+  }
+}
+
+/* ------------------------------------------------------------------ */
+/* Layout: 2fr primary (goal + board) | 1fr rail (agents + lessons).  */
+/* ------------------------------------------------------------------ */
+
+.app-main {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+  gap: 16px;
+  align-items: start;
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 20px 24px 32px;
+}
+
+.app-primary,
+.app-rail {
+  display: grid;
+  gap: 16px;
+  align-content: start;
+  min-width: 0;
+}
+
+@media (max-width: 960px) {
+  .app-main {
+    grid-template-columns: 1fr;
+    padding: 16px 16px 28px;
+  }
+}
+
+/* Shared panel chrome for top-level sections and board columns. */
+.goal-form,
+.agent-panel,
+.lessons-feed,
+.column {
+  background: var(--bg-panel);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-panel);
+  padding: 14px 16px 16px;
+}
+
+/* Uppercase micro-label headers. */
+.goal-form-header,
+.agent-panel-header,
+.lessons-feed-header,
+.column-header {
+  margin: 0 0 12px;
+  font-size: 11px;
+  font-weight: 650;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+
+/* ------------------------------------------------------------------ */
+/* GoalForm: wide dark input, primary submit, red error line.          */
+/* ------------------------------------------------------------------ */
+
+.goal-form {
+  display: grid;
+  gap: 10px;
+}
+
+.goal-input {
+  box-sizing: border-box;
+  width: 100%;
+  padding: 9px 12px;
+  background: var(--bg);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-chip);
+  color: var(--text);
+  font: inherit;
+  transition: border-color 180ms ease, box-shadow 180ms ease;
+}
+
+.goal-input::placeholder {
+  color: var(--text-dim);
+}
+
+.goal-input:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-tint);
+}
+
+.goal-submit {
+  justify-self: start;
+  padding: 8px 20px;
+  background: var(--accent);
+  border: 1px solid transparent;
+  border-radius: var(--radius-chip);
+  color: var(--ink-on-accent);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 180ms ease, opacity 180ms ease,
+    transform 120ms ease;
+}
+
+.goal-submit:hover:not(:disabled) {
+  background: #48d2d8;
+}
+
+.goal-submit:active:not(:disabled) {
+  transform: translateY(1px);
+}
+
+.goal-submit:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.goal-submit:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.goal-error {
+  margin: 0;
+  font-size: 13px;
+  color: var(--danger);
+}
+
+/* ------------------------------------------------------------------ */
+/* Board: three equal columns of elevated task cards.                  */
+/* ------------------------------------------------------------------ */
+
+.board {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  align-items: start;
+}
+
+@media (max-width: 700px) {
+  .board {
+    grid-template-columns: 1fr;
+  }
+}
+
+.column-empty {
+  margin: 0;
+  font-size: 12.5px;
+  font-style: italic;
+  color: var(--text-dim);
+}
+
+.card {
+  background: var(--bg-raised);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--border-strong);
+  border-radius: var(--radius-chip);
+  padding: 10px 12px;
+  display: grid;
+  gap: 8px;
+  transition: border-color 180ms ease, background 180ms ease;
+}
+
+.card + .card {
+  margin-top: 8px;
+}
+
+/* Status coding on the card. */
+.card-todo {
+  border-left-color: var(--border-strong);
+}
+
+.card-in_progress {
+  border-left-color: var(--accent);
+}
+
+.card-done {
+  border-left-color: var(--success);
+}
+
+.card-failed {
+  border-left-color: var(--danger);
+}
+
+.card-title {
+  margin: 0;
+  font-size: 13.5px;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.card-todo .card-title {
+  color: var(--text-dim);
+}
+
+.card-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+
+/* Badge base: small monospace chip. */
+.badge {
+  display: inline-block;
+  padding: 1px 8px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-pill);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  line-height: 1.6;
+  letter-spacing: 0.02em;
+  color: var(--text-dim);
+}
+
+/* Role chips: colored outlines. */
+.badge-role-researcher {
+  color: var(--accent);
+  border-color: var(--accent);
+}
+
+.badge-role-coder {
+  color: var(--warn);
+  border-color: var(--warn);
+}
+
+.badge-role-reviewer {
+  color: var(--violet);
+  border-color: var(--violet);
+}
+
+/* Status chips. */
+.badge-status-todo {
+  color: var(--text-dim);
+}
+
+.badge-status-in_progress {
+  color: var(--accent);
+  border-color: var(--accent);
+  background: var(--accent-tint);
+}
+
+.badge-status-done {
+  color: var(--success);
+  border-color: var(--success);
+  background: var(--success-tint);
+}
+
+.badge-status-failed,
+.badge-failed {
+  color: var(--danger);
+  border-color: var(--danger);
+  background: var(--danger-tint);
+  font-weight: 700;
+}
+
+.badge-assignee {
+  border-style: dashed;
+}
+
+/* Activity strip: the thought-chain tail. */
+.card-activity {
+  margin: 0;
+  padding: 4px 8px;
+  border-left: 2px solid var(--accent-soft);
+  background: rgba(53, 194, 200, 0.04);
+  list-style: none;
+  display: grid;
+  gap: 3px;
+}
+
+.card-activity-entry {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--text-dim);
+  overflow-wrap: anywhere;
+}
+
+/* ------------------------------------------------------------------ */
+/* AgentPanel: compact rows with status pill + current task line.      */
+/* ------------------------------------------------------------------ */
+
+.agent-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+}
+
+.agent-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 8px;
+  padding: 8px 10px;
+  background: var(--bg-raised);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-chip);
+}
+
+.agent-name {
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.agent-current-task {
+  flex-basis: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--text-dim);
+}
+
+.pill {
+  display: inline-block;
+  padding: 1px 8px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-pill);
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+
+.pill-working {
+  color: var(--ink-on-accent);
+  background: var(--warn);
+  border-color: var(--warn);
+}
+
+.pill-idle {
+  color: var(--text-dim);
+  background: transparent;
+}
+
+.agent-panel-empty,
+.lessons-feed-empty {
+  margin: 0;
+  font-size: 12.5px;
+  font-style: italic;
+  color: var(--text-dim);
+}
+
+/* ------------------------------------------------------------------ */
+/* LessonsFeed: scrollable rail, hairline-separated entries.           */
+/* ------------------------------------------------------------------ */
+
+.lesson-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  max-height: 50vh;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-strong) transparent;
+}
+
+.lesson-entry {
+  display: grid;
+  gap: 4px;
+  padding: 8px 2px;
+  border-bottom: 1px solid var(--border);
+}
+
+.lesson-entry:first-child {
+  padding-top: 0;
+}
+
+.lesson-entry:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+/* Lesson badges carry the entry content, so render as readable tints. */
+.badge-lesson,
+.badge-pitfall {
+  border-radius: var(--radius-chip);
+  padding: 5px 8px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  line-height: 1.5;
+  letter-spacing: normal;
+  overflow-wrap: anywhere;
+}
+
+.badge-lesson {
+  color: var(--text);
+  background: var(--accent-tint);
+  border-color: var(--accent-soft);
+}
+
+.badge-pitfall {
+  color: var(--danger-text);
+  background: var(--danger-tint);
+  border-color: var(--danger-soft);
+}
+
+.lesson-time {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-dim);
+}
+
+/* ------------------------------------------------------------------ */
+/* Motion: subtle only; respect reduced-motion preferences.            */
+/* ------------------------------------------------------------------ */
+
+@media (prefers-reduced-motion: reduce) {
+  .conn-reconnecting::before {
+    animation: none;
+  }
+
+  .goal-input,
+  .goal-submit,
+  .card {
+    transition: none;
+  }
+}

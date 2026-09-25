@@ -1,0 +1,63 @@
+{
+  "schemaVersion": 1,
+  "fermentId": "01a0d8c4-f952-72ed-9586-385a04c80e2c",
+  "phaseId": "phase-3",
+  "phaseName": "Phase 3 — React real-time dashboard",
+  "attempt": 1,
+  "timestamp": "2026-09-25T15:36:37.403Z",
+  "goal": "A Vite+React dashboard that renders the kanban board, agent status panel, goal submission form, and lessons feed, all driven live from the backend over WebSocket without page refresh",
+  "summary": "Phase 3 delivered the real-time React dashboard. Data layer: web/src/api.ts (typed REST client getState/getAgents/getLessons/postGoal with verbatim server {error} propagation; connectWs with same-origin ws(s)://location.host/ws, 500ms->5000ms jittered backoff, status callbacks, intentional close) and web/src/store.ts (React-free reducer store: snapshot/event/ws.status actions, id-keyed upserts preserving order, lesson prepend, structural-equality no-ops preserving references, useSyncExternalStore-compatible; 24 tests). Components: Board.tsx (3-column kanban with counts, failed-in-Done with distinct badge, role/status/assignee badges, activity.slice(-2) thought-chain tail, data-testids) and AgentPanel.tsx (roster with status pills and current-task resolution) with 9 render tests incl. seeded-store WS re-render; GoalForm.tsx (POST /goals via injected wrapper, disabled on empty/in-flight, verbatim 400 errors in role=alert) + LessonsFeed.tsx (newest-first, lesson/pitfall badge tints) + App.tsx (singleton store + StrictMode-safe hydration+connectWs, conn indicator, 2fr|1fr composition) with 13 more tests incl. the criterion-critical App test proving WS events mutate the rendered board without refresh. Styling: handcrafted dark operator-console styles.css (7.01 kB bundled), dark color-scheme index.html, status/role color coding, responsive grid, reduced-motion support. Verified: web suite 46/46 (web total incl. sanity), root 113/113, vite build exit 0 with css asset, typecheck+lint exit 0, and an INSPECTED live run: real npm run dev (server:3001 + vite:5173 proxy) with POST /goals through the proxy -> 201 and a verbatim 38-event WS transcript ending goal.status done with 4 lessons and 4 terminal tasks, page HTML + dev styles confirmed, clean teardown.",
+  "stepSummaries": "  1. Implement web/src/api.ts (REST client + WS client with reconnect/backoff) and web/src/store.ts (reducer store applying WsEvents: task.updated, agent.status, lesson.created, goal.status) with store.test.ts feeding scripted event sequences and asserting resulting state [verified]\n  2. Implement kanban Board (Todo/In Progress/Done columns of task cards with role + activity badge) and AgentPanel (per-agent role, status, current task) rendering from the store, with a component render test against a seeded store [verified]\n  3. Implement GoalForm (POSTs to /goals, disables on empty input, shows 400 errors) and LessonsFeed (live-appended lesson entries), wired through the store/api layer with a test asserting submit issues POST /goals [verified]\n  4. Layout & styling pass: dark operator-console aesthetic, responsive grid (board | agents | lessons), status color coding, activity log strip per card for the thought-chain feel [verified]",
+  "diffAvailable": false,
+  "evidence": "$ npm --prefix web test -> exit 0: 46/46 (store 24, components 9, App 4, GoalForm 5, LessonsFeed 3, sanity 1)\n$ npm test (root) -> exit 0: 'Test Files 12 passed (12), Tests 113 passed (113)'\n$ npm --prefix web run build -> exit 0: dist/index.html 0.56 kB, index-DCaT890Z.css 7.01 kB, index-DZRdzqMq.js 226.82 kB; styling classes confirmed inside css/js assets\n$ npm run lint -> exit 0; npm --prefix web run typecheck -> exit 0\nINSPECTED RUN: npm run dev (server:3001 + vite:5173) -> both 200; POST /goals via vite proxy -> 201 goal 1ce78f50; WS (ws://localhost:5173/ws) 38 events verbatim: goal.status running, per-task in_progress updates, agent.status working/idle (Rex/Ada/Ravi), 4x lesson.created content visible, goal.status done; terminals=4 lessons=4 PASS; HTML <div id=root> + /src/main.tsx + dark color-scheme; dev GET /src/styles.css 200 (12004 bytes); teardown: no :3001/:5173 listeners, temp db removed, nothing committed.",
+  "flags": [],
+  "derivedGrade": "A",
+  "reviewerRationale": "All gates pass; project checks validate.",
+  "gateVerdicts": [
+    {
+      "id": "F1",
+      "verdict": "pass",
+      "rationale": "Every step ran the real artifact: 24 reducer/client unit tests, 22 DOM render tests incl. a seeded-store WS re-render and an App test driving WS events against the mounted board, a real vite build per step, and step-4's inspected run exercising the full dev stack in its native medium with a recorded protocol transcript",
+      "evidence": "web suite 46/46; App.test.tsx WS->DOM assertions; npm --prefix web run build exit 0 (JS 226 kB + CSS 7.01 kB); 38-event live transcript with INSPECT_EXIT=0"
+    },
+    {
+      "id": "F2",
+      "verdict": "pass",
+      "rationale": "Phase goal — Vite+React dashboard rendering kanban board, agent status panel, goal form, and lessons feed, driven live over WebSocket without page refresh — is met by the composed App (all four views mounted, store-driven) whose update path is exactly WS-event -> reducer -> useSyncExternalStore -> re-render, proven in tests and in the inspected live run",
+      "evidence": "App.tsx composition + App.test.tsx live update assertions; inspected run: goal submitted via proxy, cards/lessons/agents events streamed live to a done state"
+    },
+    {
+      "id": "F3",
+      "verdict": "pass",
+      "rationale": "Nothing deferred: all 4 steps completed; open quality concern 'live snappiness' answered by the reducer's referential no-ops + recorded fast event flow; one noted residual: react version note in a worker report (18.3.1 pinned vs worker's '19.3.0' remark) is a reporting slip, not a functional issue — build/tests typecheck against installed tree and all pass",
+      "evidence": "4/4 step reports completed, remaining_steps []; verified runs: 46/46 web, 113/113 root"
+    }
+  ],
+  "projectChecks": {
+    "discovered": true,
+    "anyFailed": false,
+    "commands": [
+      {
+        "kind": "test",
+        "command": "npm test",
+        "exitCode": 0,
+        "durationMs": 0,
+        "timedOut": false
+      },
+      {
+        "kind": "lint",
+        "command": "npm run lint",
+        "exitCode": 0,
+        "durationMs": 0,
+        "timedOut": false
+      },
+      {
+        "kind": "typecheck",
+        "command": "npm run typecheck",
+        "exitCode": 0,
+        "durationMs": 0,
+        "timedOut": false
+      }
+    ]
+  }
+}

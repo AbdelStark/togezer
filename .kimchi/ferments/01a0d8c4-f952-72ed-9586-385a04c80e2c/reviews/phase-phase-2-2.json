@@ -1,0 +1,63 @@
+{
+  "schemaVersion": 1,
+  "fermentId": "01a0d8c4-f952-72ed-9586-385a04c80e2c",
+  "phaseId": "phase-2",
+  "phaseName": "Phase 2 — Backend: orchestrator, agents, persistence, API",
+  "attempt": 2,
+  "timestamp": "2026-09-25T14:52:00.606Z",
+  "goal": "A bootable backend that accepts goals via REST, decomposes and assigns them to simulated agents, drives the full task lifecycle autonomously, persists lessons to SQLite, and broadcasts everything over WebSocket",
+  "summary": "Phase 2 delivered a fully operational simulated-agent backend after one grading remediation round. Core: server/src/db.ts (node:sqlite factory: idempotent schema + FK pragma, typed CRUD goals/agents/tasks/lessons, injectable IDs, prepared statements, JSON activity, deterministic newest-first lessons), server/src/orchestrator.ts (pure: decomposeGoal -> pending goal + deterministic 4-task researcher/coder/reviewer template with blank-throw and 60-char topic truncation; least-loaded role-matched assignTasks + retryUnassigned; aggregateGoalStatus with failed precedence), server/src/agents.ts (createSimulation: mulberry32 seeded RNG, synchronous tick, 2-4 tick budgets, todo->in_progress->done/failed with role-flavored thought-chain activity, Lesson from/Pitfall from banking with topic-interpolated copy, fresh-object WsEvent emission, idempotent terminal ticks, unref'd start()), server/src/ws.ts + api.ts + index.ts (WS hub at /ws with dead-client cleanup; REST: POST /goals 400/201, GET /goals/:id 404, GET /agents, GET /lessons ?limit 1..200, GET /state; production boot with file db, 3-agent seed, env config, signal teardown; createApp(db, emit) with NO unused sim param). Grading remediation: pitfallNote params now interpolate topic (lint clean), unused TaskUpdatedEvent alias removed, dead createApp sim parameter removed across 3 call sites — verified by .kimchi/docs/verification.md: npm run lint exit 0 zero problems, typecheck exit 0 both workspaces, root npm test exit 0 with Tests 68 passed (68) identical to pre-fix baseline. Test coverage: 67 server tests (db 30, orchestrator 14, lifecycle 7, api 12 incl. WS client assertions, lessons/restart 2) + 1 web sanity; plus a recorded boot smoke of a real process running a full autonomous goal to done with 4 lessons banked.",
+  "stepSummaries": "  1. Implement server/src/db.ts: node:sqlite schema (goals, agents, tasks, lessons) + typed CRUD functions, plus server/src/db.test.ts covering roundtrip writes and reads [verified]\n  2. Implement server/src/orchestrator.ts: goal decomposition (goal text -> >=3 role-matched sub-task templates across Researcher/Coder/Reviewer), role-based assignment to registered agents, goal status aggregation; with orchestrator.test.ts asserting count, role matching, and assignment [verified]\n  3. Implement server/src/agents.ts + tick loop: simulated agents autonomously transition assigned tasks todo -> in_progress -> done/failed with seeded outcomes and realistic activity messages (the PRD's thought-chain stand-in), generating a Lesson on every completion and every failure (failures shared as pitfalls to avoid); lifecycle.test.ts runs a full sample goal to completion deterministically [verified]\n  4. Implement server/src/api.ts + ws.ts + index.ts: REST endpoints POST /goals (400 on empty text), GET /state, GET /goals/:id, GET /agents, GET /lessons (404 for unknown goal), WS hub broadcasting every state mutation, boot wiring of orchestrator loop; api.test.ts starts the server on an ephemeral port, exercises all endpoints, and asserts a WS client receives task.updated events after POST /goals [verified]\n  5. Restart persistence: lessons.test.ts boots the store, completes a task so a lesson is written, closes and reopens the SQLite file/server, and asserts GET /lessons still returns the entry [verified]",
+  "diffAvailable": false,
+  "evidence": "$ npm run lint -> exit 0, zero problems (post-remediation)\n$ npm run typecheck -> exit 0 (tsc --noEmit -p server && -p web)\n$ npm test (root) -> exit 0: 'Test Files 7 passed (7), Tests 68 passed (68)' (db 30, orchestrator 14, lifecycle 7, api 12, lessons 2, sanity 2+1)\n$ Boot smoke PORT=3211: GET /state -> 3 seeded agents; POST /goals -> 201 running; ~8s later goal done, 4x tasks done, 4 lessons; clean SIGTERM; tmp db removed\n$ Restart persistence: 4 lessons byte-identical (id/content/sourceTaskId/createdAt) after shutdown+reboot; second goal post-restart accumulates 8\n$ grep -n sim server/src/api.ts -> only a doc-comment mention; createApp(db, emit) signature clean\nVerification report: .kimchi/docs/verification.md verdict ALL_PASS",
+  "flags": [],
+  "derivedGrade": "A",
+  "reviewerRationale": "All gates pass; project checks validate.",
+  "gateVerdicts": [
+    {
+      "id": "F1",
+      "verdict": "pass",
+      "rationale": "Every step was verified by executing the real artifact — 5 dedicated Vitest suites over the actual db/orchestrator/simulation/HTTP+WS stacks (67 server tests), an out-of-process boot smoke with observed end-to-end transitions, restart persistence on file-backed SQLite, and a post-remediation verification report re-running lint/typecheck/full-tests from a corrected state",
+      "evidence": "npm --prefix server test -> 67/67; root npm test -> 68/68 (7/7 files, identical pre/post remediation); boot smoke PORT=3211: goal running->done, 4 lessons; .kimchi/docs/verification.md verdict ALL_PASS"
+    },
+    {
+      "id": "F2",
+      "verdict": "pass",
+      "rationale": "Phase goal — bootable backend accepting goals via REST, decomposing+assigning to simulated agents, autonomously driving the lifecycle, persisting lessons to SQLite, broadcasting over WebSocket — demonstrably met by api.test.ts (REST+WS live servers), lifecycle.test.ts (autonomous execution), lessons.test.ts (restart persistence), and the recorded boot smoke",
+      "evidence": "api.test.ts 12/12; lifecycle.test.ts 7/7; lessons.test.ts 2/2 (lesONS byte-identical after restart); boot smoke GET /state running->done"
+    },
+    {
+      "id": "F3",
+      "verdict": "pass",
+      "rationale": "Nothing deferred: all 5 steps completed with remaining_steps []; grader's 2 remediation items fully fixed and re-verified (lint red claim corrected — my earlier evidence was wrong, now lint genuinely exits 0); noted outside-scope fact: repo has no initial git commit (not requested by this ferment)",
+      "evidence": "5/5 completed step reports; verification.md ALL_PASS: npm run lint exit 0 zero problems, grep confirms no sim param in api.ts"
+    }
+  ],
+  "projectChecks": {
+    "discovered": true,
+    "anyFailed": false,
+    "commands": [
+      {
+        "kind": "test",
+        "command": "npm test",
+        "exitCode": 0,
+        "durationMs": 0,
+        "timedOut": false
+      },
+      {
+        "kind": "lint",
+        "command": "npm run lint",
+        "exitCode": 0,
+        "durationMs": 0,
+        "timedOut": false
+      },
+      {
+        "kind": "typecheck",
+        "command": "npm run typecheck",
+        "exitCode": 0,
+        "durationMs": 0,
+        "timedOut": false
+      }
+    ]
+  }
+}
